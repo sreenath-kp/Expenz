@@ -27,7 +27,7 @@ class _ExpenseItemState extends State<ExpenseItem> {
             leading: CircleAvatar(
               backgroundColor: Colors.grey[200],
               child: Icon(
-                catergoryIcons[widget.expense.category],
+                categoryIcons[widget.expense.category],
                 color: const Color(0xFF0E0D0D),
               ),
             ),

@@ -1,4 +1,5 @@
 import 'package:expenz/model/expense.dart';
+import 'package:expenz/widgets/chart.dart';
 import 'package:expenz/widgets/expenses_list.dart';
 import 'package:expenz/widgets/new_expense.dart';
 import 'package:flutter/material.dart';
@@ -11,32 +12,7 @@ class Expenses extends StatefulWidget {
 }
 
 class _ExpensesState extends State<Expenses> {
-  final List<Expense> _expenseList = [
-    Expense(
-      title: 'Breakfast',
-      amount: 45,
-      date: DateTime(2023, 5, 20),
-      category: Category.Food,
-    ),
-    Expense(
-      title: 'Flutter Course',
-      amount: 500,
-      date: DateTime.now(),
-      category: Category.Work,
-    ),
-    Expense(
-      title: 'Dress',
-      amount: 1500,
-      date: DateTime(2023, 5, 19),
-      category: Category.Shopping,
-    ),
-    Expense(
-      title: 'Cinema',
-      amount: 250,
-      date: DateTime(2023, 5, 17),
-      category: Category.Leisure,
-    ),
-  ];
+  final List<Expense> _expenseList = [];
 
   void _openAddExpenseOverlay() {
     showModalBottomSheet(
@@ -103,13 +79,7 @@ class _ExpensesState extends State<Expenses> {
       body: Center(
         child: Column(
           children: [
-            const SizedBox(
-              width: double.infinity,
-              height: 100,
-              child: Card(
-                color: Color(0xFF303046),
-              ),
-            ),
+            Chart(expenses: _expenseList),
             Expanded(
               child: mainContent,
             ),
