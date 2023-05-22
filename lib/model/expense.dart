@@ -8,7 +8,7 @@ final formatter = DateFormat.yMMMd();
 // ignore: constant_identifier_names
 enum Category { Food, Travel, Shopping, Bills, Leisure, Work, Others }
 
-const catergoryIcons = {
+const categoryIcons = {
   Category.Food: Icons.lunch_dining_outlined,
   Category.Travel: Icons.flight_takeoff_outlined,
   Category.Shopping: Icons.shopping_bag_outlined,
