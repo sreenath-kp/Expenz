@@ -3,17 +3,18 @@ import 'package:expenz/widgets/chart.dart';
 import 'package:expenz/widgets/expenses_list.dart';
 import 'package:expenz/widgets/new_expense.dart';
 import 'package:flutter/material.dart';
+import 'package:expenz/data/database.dart';
 
 class Expenses extends StatefulWidget {
-  const Expenses({super.key});
+  const Expenses({required this.expenseList, super.key});
+  final List<Expense> expenseList;
 
   @override
   State<Expenses> createState() => _ExpensesState();
 }
 
 class _ExpensesState extends State<Expenses> {
-  final List<Expense> _expenseList = [];
-
+  final database = DatabaseSerive();
   void _openAddExpenseOverlay() {
     showModalBottomSheet(
       context: context,
@@ -24,16 +25,18 @@ class _ExpensesState extends State<Expenses> {
     );
   }
 
-  void _addExpense(Expense expense) {
+  void _addExpense(Expense expense) async {
     setState(() {
-      _expenseList.add(expense);
+      // widget.expenseList.add(expense);
+      database.addExpense(expense);
     });
   }
 
   void _removeExpense(Expense expense) {
-    final index = _expenseList.indexOf(expense);
+    final index = widget.expenseList.indexOf(expense);
     setState(() {
-      _expenseList.remove(expense);
+      // widget.expenseList.remove(expense);
+      database.removeExpense(expense.id);
     });
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -44,7 +47,7 @@ class _ExpensesState extends State<Expenses> {
           label: 'Undo',
           onPressed: () {
             setState(() {
-              _expenseList.insert(index, expense);
+              widget.expenseList.insert(index, expense);
             });
           },
         ),
@@ -57,9 +60,9 @@ class _ExpensesState extends State<Expenses> {
     Widget mainContent = const Center(
       child: Text('No expenses added yet!'),
     );
-    if (_expenseList.isNotEmpty) {
+    if (widget.expenseList.isNotEmpty) {
       mainContent = ExpensesList(
-        expenses: _expenseList,
+        expenses: widget.expenseList,
         onRemoveExpense: _removeExpense,
       );
     }
@@ -79,7 +82,7 @@ class _ExpensesState extends State<Expenses> {
       body: Center(
         child: Column(
           children: [
-            Chart(expenses: _expenseList),
+            Chart(expenses: widget.expenseList),
             Expanded(
               child: mainContent,
             ),

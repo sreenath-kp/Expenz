@@ -1,7 +1,10 @@
+import 'package:expenz/wrapper.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:expenz/expenz.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(const MainApp());
 }
 
@@ -29,7 +32,7 @@ class MainApp extends StatelessWidget {
             elevation: 4),
       ),
       // themeMode: ThemeMode.system,
-      home: const Expenses(),
+      home: const Wrapper(),
     );
   }
 }
