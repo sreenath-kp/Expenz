@@ -57,7 +57,7 @@ class _ExpenseItemState extends State<ExpenseItem> {
                     TextButton(
                       style: ButtonStyle(
                         foregroundColor: MaterialStateProperty.all(
-                          const Color(0xFF0E0D0D),
+                          Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       onPressed: () {},
@@ -66,7 +66,7 @@ class _ExpenseItemState extends State<ExpenseItem> {
                     TextButton(
                       style: ButtonStyle(
                         foregroundColor: MaterialStateProperty.all(
-                          const Color(0xFF0E0D0D),
+                          Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       onPressed: () {},

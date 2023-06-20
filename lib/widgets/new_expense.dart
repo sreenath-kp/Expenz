@@ -1,5 +1,9 @@
+import 'dart:convert';
+
+import 'package:expenz/database.dart';
 import 'package:flutter/material.dart';
 import 'package:expenz/model/expense.dart';
+import 'package:http/http.dart' as http;
 
 class NewExpense extends StatefulWidget {
   const NewExpense(this.addExpense, {super.key});
@@ -22,24 +26,13 @@ class _NewExpenseState extends State<NewExpense> {
       initialDate: now,
       firstDate: DateTime(now.year - 1, now.month, now.day),
       lastDate: now,
-      // builder: (context, child) {
-      //   return Theme(
-      //     data: Theme.of(context).copyWith(
-      //       colorScheme: const ColorScheme.light(
-      //         primary: Color(0xFF303046),
-      //         onPrimary: Colors.white,
-      //       ),
-      //     ),
-      //     child: child!,
-      //   );
-      // },
     );
     setState(() {
       _selectedDate = pickedDate;
     });
   }
 
-  void _submitExpenseData() {
+  void _submitExpenseData() async {
     final enteredAmount = double.tryParse(_amount.text);
     final amountInvalid = enteredAmount == null || enteredAmount <= 0;
     if (_title.text.trim().isEmpty || amountInvalid || _selectedDate == null) {
@@ -68,7 +61,13 @@ class _NewExpenseState extends State<NewExpense> {
       category:
           _selectedCategory == null ? Category.Others : _selectedCategory!,
     );
-    widget.addExpense(newExpense);
+    await Database.send(newExpense);// new expense sent to database
+    widget.addExpense(newExpense); // new expense is added locally
+
+    // TODO: Remove reduntant code
+    //
+    // ignore: use_build_context_synchronously
+    if (!context.mounted) return;
     Navigator.of(context).pop();
   }
 
@@ -81,109 +80,169 @@ class _NewExpenseState extends State<NewExpense> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 10.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TextField(
-            controller: _title,
-            // cursorColor: const Color(0xFF0E0D0D),
-            maxLength: 50,
-            decoration: const InputDecoration(
-              labelText: 'Title',
-              // labelStyle: TextStyle(
-              //   color: Color(0xFF0E0D0D),
-              // ),
-              // focusedBorder: UnderlineInputBorder(
-              //   borderSide: BorderSide(
-              //     color: Color(0xFF0E0D0D),
-              //   ),
-              // ),
-            ),
-          ),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _amount,
-                  // cursorColor: const Color(0xFF0E0D0D),
-                  decoration: const InputDecoration(
-                    prefixText: '₹',
-                    labelText: 'Amount',
-                    // labelStyle: TextStyle(
-                    //   color: Color(0xFF0E0D0D),
-                    // ),
-                    // focusedBorder: UnderlineInputBorder(
-                    //   borderSide: BorderSide(
-                    //     color: Color(0xFF0E0D0D),
-                    //   ),
-                    // ),
+    final keyboardspace = MediaQuery.of(context).viewInsets.bottom;
+    final width = MediaQuery.of(context).size.width;
+
+    return LayoutBuilder(builder: (context, constraints) {
+      return SizedBox(
+        height: width < 600 ? 500 : double.infinity,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding:
+                EdgeInsets.fromLTRB(40.0, 10.0, 40.0, 10.0 + keyboardspace),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (constraints.maxWidth >= 600)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _title,
+                          maxLength: 50,
+                          decoration: const InputDecoration(
+                            labelText: 'Title',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 100),
+                      Expanded(
+                        child: TextField(
+                          controller: _amount,
+                          decoration: const InputDecoration(
+                            prefixText: '₹',
+                            labelText: 'Amount',
+                          ),
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                    ],
+                  )
+                else
+                  TextField(
+                    controller: _title,
+                    maxLength: 50,
+                    decoration: const InputDecoration(
+                      labelText: 'Title',
+                    ),
                   ),
-                  keyboardType: TextInputType.number,
-                ),
-              ),
-              const SizedBox(width: 60),
-              Expanded(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text(_selectedDate == null
-                        ? 'Select Date'
-                        : formatter.format(_selectedDate!)),
-                    IconButton(
-                      onPressed: datePicker,
-                      icon: const Icon(Icons.calendar_month),
-                    )
-                  ],
-                ),
-              )
-            ],
-          ),
-          const SizedBox(height: 10),
-          DropdownButton(
-              hint: const Text('Select Category'),
-              value: _selectedCategory,
-              items: Category.values
-                  .map(
-                    (category) => DropdownMenuItem(
-                      value: category,
-                      child: Text(category.name.toString()),
+                if (constraints.maxWidth >= 600)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 20.0),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        DropdownButton(
+                            hint: const Text('Select Category'),
+                            value: _selectedCategory,
+                            items: Category.values
+                                .map(
+                                  (category) => DropdownMenuItem(
+                                    value: category,
+                                    child: Text(category.name.toString()),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedCategory = value;
+                              });
+                            }),
+                        const SizedBox(width: 50),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Text(_selectedDate == null
+                                ? 'Select Date'
+                                : formatter.format(_selectedDate!)),
+                            IconButton(
+                              onPressed: datePicker,
+                              icon: const Icon(Icons.calendar_month),
+                            )
+                          ],
+                        ),
+                      ],
                     ),
                   )
-                  .toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedCategory = value;
-                });
-              }),
-          ButtonBar(
-            alignment: MainAxisAlignment.spaceBetween,
-            children: [
-              TextButton(
-                style: ButtonStyle(
-                  // foregroundColor: MaterialStateProperty.all(Colors.black54),
-                  overlayColor: MaterialStateColor.resolveWith(
-                    (states) => const Color(0xFF0E0D0D).withOpacity(0.2),
+                else
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _amount,
+                              decoration: const InputDecoration(
+                                prefixText: '₹',
+                                labelText: 'Amount',
+                              ),
+                              keyboardType: TextInputType.number,
+                            ),
+                          ),
+                          const SizedBox(width: 60),
+                          Expanded(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                Text(_selectedDate == null
+                                    ? 'Select Date'
+                                    : formatter.format(_selectedDate!)),
+                                IconButton(
+                                  onPressed: datePicker,
+                                  icon: const Icon(Icons.calendar_month),
+                                )
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20.0),
+                      DropdownButton(
+                          hint: const Text('Select Category'),
+                          value: _selectedCategory,
+                          items: Category.values
+                              .map(
+                                (category) => DropdownMenuItem(
+                                  value: category,
+                                  child: Text(category.name.toString()),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedCategory = value;
+                            });
+                          }),
+                    ],
                   ),
+                ButtonBar(
+                  alignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                      style: ButtonStyle(
+                        overlayColor: MaterialStateColor.resolveWith(
+                          (states) => const Color(0xFF0E0D0D).withOpacity(0.2),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('Cancel'),
+                    ),
+                    ElevatedButton(
+                      onPressed: _submitExpenseData,
+                      child: const Text('Add Expense'),
+                    ),
+                  ],
                 ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: _submitExpenseData,
-                // style: ButtonStyle(
-                //   backgroundColor:
-                //       MaterialStateProperty.all(const Color(0xFF0E0D0D)),
-                // ),
-                child: const Text('Add Expense'),
-              ),
-            ],
+              ],
+            ),
           ),
-        ],
-      ),
-    );
+        ),
+      );
+    });
   }
 }

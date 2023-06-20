@@ -15,7 +15,7 @@ class MainApp extends StatelessWidget {
       darkTheme: ThemeData.dark().copyWith(
         colorScheme: ColorScheme.fromSeed(
           brightness: Brightness.dark,
-          seedColor: const Color(0xFF0E0D0D),
+          seedColor: const Color(0xFF00ab75),
           onSurface: Colors.white,
         ),
       ),
@@ -24,9 +24,10 @@ class MainApp extends StatelessWidget {
           seedColor: const Color(0xFF0E0D0D),
         ),
         cardTheme: const CardTheme(
-            color: Color.fromARGB(255, 200, 200, 220),
-            margin: EdgeInsets.symmetric(vertical: 5),
-            elevation: 4),
+          color: Color.fromARGB(255, 200, 200, 220),
+          margin: EdgeInsets.symmetric(vertical: 5),
+          elevation: 4,
+        ),
       ),
       // themeMode: ThemeMode.system,
       home: const Expenses(),

@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'package:expenz/model/expense.dart';
 import 'package:expenz/widgets/chart.dart';
 import 'package:expenz/widgets/expenses_list.dart';
 import 'package:expenz/widgets/new_expense.dart';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 
 class Expenses extends StatefulWidget {
@@ -12,9 +14,41 @@ class Expenses extends StatefulWidget {
 }
 
 class _ExpensesState extends State<Expenses> {
-  final List<Expense> _expenseList = [];
+  late List<Expense> _expenseList = [];
 
-  void _openAddExpenseOverlay() {
+  @override
+  void initState() {
+    super.initState();
+    _loadItems();
+  }
+
+  void _loadItems() async {
+    final url = Uri.https(
+        'expenz-f4a64-default-rtdb.firebaseio.com', 'expenz-list.json');
+    final response = await http.get(url);
+    final Map<String, dynamic>? listData = json.decode(response.body);
+
+    final List<Expense> loadedItems = [];
+    if (listData != null) {
+      for (final item in listData.entries) {
+        loadedItems.add(
+          Expense(
+            title: item.value['title'],
+            amount: item.value['amount'],
+            date: DateTime.parse(item.value['date']),
+            category: Category.values.byName(
+              item.value['category'],
+            ),
+          ),
+        );
+      }
+    }
+    setState(() {
+      _expenseList = loadedItems;
+    });
+  }
+
+  void _openAddExpenseOverlay() async {
     showModalBottomSheet(
       context: context,
       constraints: const BoxConstraints(
@@ -28,13 +62,29 @@ class _ExpensesState extends State<Expenses> {
     setState(() {
       _expenseList.add(expense);
     });
+    // _loadItems();
   }
 
+// TODO: Delete function need to be set
   void _removeExpense(Expense expense) {
     final index = _expenseList.indexOf(expense);
+    // final url = Uri.https(
+    //     'expenz-f4a64-default-rtdb.firebaseio.com', 'expenz-list.json');
     setState(() {
       _expenseList.remove(expense);
     });
+    // http.delete(
+    //   url,
+    //   body: json.encode(
+    //     {
+    //       'title': expense.title,
+    //       'amount': expense.amount,
+    //       'date': expense.date.toUtc().toString(),
+    //       'category': expense.category.name.toString(),
+    //     },
+    //   ),
+    // );
+
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -54,6 +104,7 @@ class _ExpensesState extends State<Expenses> {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
     Widget mainContent = const Center(
       child: Text('No expenses added yet!'),
     );
@@ -64,10 +115,11 @@ class _ExpensesState extends State<Expenses> {
       );
     }
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.background,
       appBar: AppBar(
         foregroundColor: Colors.white,
-        backgroundColor: const Color(0xFF303046),
         title: const Text('Expenz'),
+        elevation: 0,
         centerTitle: true,
         actions: [
           IconButton(
@@ -76,16 +128,23 @@ class _ExpensesState extends State<Expenses> {
           ),
         ],
       ),
-      body: Center(
-        child: Column(
-          children: [
-            Chart(expenses: _expenseList),
-            Expanded(
-              child: mainContent,
-            ),
-          ],
-        ),
-      ),
+      body: width < 600
+          ? Column(
+              children: [
+                Chart(expenses: _expenseList),
+                Expanded(
+                  child: mainContent,
+                ),
+              ],
+            )
+          : Row(children: [
+              Expanded(
+                child: Chart(expenses: _expenseList),
+              ),
+              Expanded(
+                child: mainContent,
+              ),
+            ]),
     );
   }
 }
