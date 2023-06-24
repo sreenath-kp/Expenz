@@ -16,6 +16,7 @@ class _NewExpenseState extends State<NewExpense> {
   final _amount = TextEditingController();
   DateTime? _selectedDate;
   Category? _selectedCategory;
+  var _isSending = false;
 
   void datePicker() async {
     final now = DateTime.now();
@@ -52,7 +53,9 @@ class _NewExpenseState extends State<NewExpense> {
       );
       return;
     }
-
+    setState(() {
+      _isSending = true;
+    });
     final response = await Database.send(
       {
         'title': _title.text,
@@ -243,8 +246,16 @@ class _NewExpenseState extends State<NewExpense> {
                       child: const Text('Cancel'),
                     ),
                     ElevatedButton(
-                      onPressed: _submitExpenseData,
-                      child: const Text('Add Expense'),
+                      onPressed: _isSending ? null : _submitExpenseData,
+                      child: _isSending
+                          ? const Center(
+                              child: SizedBox(
+                                height: 16,
+                                width: 16,
+                                child: CircularProgressIndicator(),
+                              ),
+                            )
+                          : const Text('Add Expense'),
                     ),
                   ],
                 ),

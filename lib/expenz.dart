@@ -15,7 +15,7 @@ class Expenses extends StatefulWidget {
 
 class _ExpensesState extends State<Expenses> {
   late List<Expense> _expenseList = [];
-
+  var _isloading = true;
   @override
   void initState() {
     super.initState();
@@ -62,8 +62,8 @@ class _ExpensesState extends State<Expenses> {
   void _addExpense(Expense expense) {
     setState(() {
       _expenseList.add(expense);
+      _isloading = false;
     });
-    _loadItems();
   }
 
 // TODO: Delete function need to be set
@@ -109,6 +109,11 @@ class _ExpensesState extends State<Expenses> {
     Widget mainContent = const Center(
       child: Text('No expenses added yet!'),
     );
+    if (_isloading) {
+      mainContent = const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
     if (_expenseList.isNotEmpty) {
       mainContent = ExpensesList(
         expenses: _expenseList,
