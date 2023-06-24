@@ -33,6 +33,7 @@ class _ExpensesState extends State<Expenses> {
       for (final item in listData.entries) {
         loadedItems.add(
           Expense(
+            id: item.key,
             title: item.value['title'],
             amount: item.value['amount'],
             date: DateTime.parse(item.value['date']),
@@ -62,7 +63,7 @@ class _ExpensesState extends State<Expenses> {
     setState(() {
       _expenseList.add(expense);
     });
-    // _loadItems();
+    _loadItems();
   }
 
 // TODO: Delete function need to be set

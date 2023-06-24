@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
 
-const uuid = Uuid();
 final formatter = DateFormat.yMMMd();
 
 // ignore: constant_identifier_names
@@ -20,11 +18,12 @@ const categoryIcons = {
 
 class Expense {
   Expense({
+    required this.id,
     required this.title,
     required this.amount,
     required this.date,
     required this.category,
-  }) : id = uuid.v4();
+  });
 
   final String id;
   final String title;

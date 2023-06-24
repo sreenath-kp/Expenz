@@ -1,10 +1,9 @@
 import 'dart:convert';
-import 'package:expenz/model/expense.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/http.dart';
 
 class Database {
-  static Future<Response> send(Expense newExpense) async {
+  static Future<Response> send(Map<String, dynamic> data) async {
     final url = Uri.https(
         'expenz-f4a64-default-rtdb.firebaseio.com', 'expenz-list.json');
     final response = await http.post(
@@ -14,10 +13,10 @@ class Database {
       },
       body: json.encode(
         {
-          'title': newExpense.title,
-          'amount': newExpense.amount,
-          'date': newExpense.date.toUtc().toString(),
-          'category': newExpense.category.name.toString(),
+          'title': data['title'],
+          'amount': data['amount'],
+          'date': data['date'].toUtc().toString(),
+          'category': data['category'].toString(),
         },
       ),
     );

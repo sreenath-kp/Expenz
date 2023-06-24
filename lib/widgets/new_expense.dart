@@ -1,9 +1,7 @@
 import 'dart:convert';
-
 import 'package:expenz/database.dart';
 import 'package:flutter/material.dart';
 import 'package:expenz/model/expense.dart';
-import 'package:http/http.dart' as http;
 
 class NewExpense extends StatefulWidget {
   const NewExpense(this.addExpense, {super.key});
@@ -54,20 +52,32 @@ class _NewExpenseState extends State<NewExpense> {
       );
       return;
     }
-    final newExpense = Expense(
-      title: _title.text,
-      amount: enteredAmount,
-      date: _selectedDate!,
-      category:
-          _selectedCategory == null ? Category.Others : _selectedCategory!,
-    );
-    await Database.send(newExpense);// new expense sent to database
-    widget.addExpense(newExpense); // new expense is added locally
 
-    // TODO: Remove reduntant code
-    //
+    final response = await Database.send(
+      {
+        'title': _title.text,
+        'amount': enteredAmount,
+        'date': _selectedDate!,
+        'category': _selectedCategory == null
+            ? Category.Others.name
+            : _selectedCategory!.name
+      },
+    );
+    // new expense sent to database
+    final Map<String, dynamic> responseData = json.decode(response.body);
     // ignore: use_build_context_synchronously
     if (!context.mounted) return;
+    // new expense is added locally
+    widget.addExpense(
+      Expense(
+        id: responseData['name'],
+        title: _title.text,
+        amount: enteredAmount,
+        date: _selectedDate!,
+        category:
+            _selectedCategory == null ? Category.Others : _selectedCategory!,
+      ),
+    );
     Navigator.of(context).pop();
   }
 
