@@ -16,6 +16,7 @@ class Expenses extends StatefulWidget {
 class _ExpensesState extends State<Expenses> {
   late List<Expense> _expenseList = [];
   var _isloading = true;
+  String? _error;
   @override
   void initState() {
     super.initState();
@@ -26,6 +27,12 @@ class _ExpensesState extends State<Expenses> {
     final url = Uri.https(
         'expenz-f4a64-default-rtdb.firebaseio.com', 'expenz-list.json');
     final response = await http.get(url);
+
+    if (response.statusCode >= 400) {
+      setState(() {
+        _error = "Failed to fetch data.Please try again later";
+      });
+    }
     final Map<String, dynamic>? listData = json.decode(response.body);
 
     final List<Expense> loadedItems = [];
@@ -66,25 +73,14 @@ class _ExpensesState extends State<Expenses> {
     });
   }
 
-// TODO: Delete function need to be set
   void _removeExpense(Expense expense) {
     final index = _expenseList.indexOf(expense);
-    // final url = Uri.https(
-    //     'expenz-f4a64-default-rtdb.firebaseio.com', 'expenz-list.json');
+    final url = Uri.https('expenz-f4a64-default-rtdb.firebaseio.com',
+        'expenz-list/${expense.id}.json');
+    http.delete(url);
     setState(() {
       _expenseList.remove(expense);
     });
-    // http.delete(
-    //   url,
-    //   body: json.encode(
-    //     {
-    //       'title': expense.title,
-    //       'amount': expense.amount,
-    //       'date': expense.date.toUtc().toString(),
-    //       'category': expense.category.name.toString(),
-    //     },
-    //   ),
-    // );
 
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -94,6 +90,7 @@ class _ExpensesState extends State<Expenses> {
         action: SnackBarAction(
           label: 'Undo',
           onPressed: () {
+            // TODO: undo
             setState(() {
               _expenseList.insert(index, expense);
             });
@@ -118,6 +115,22 @@ class _ExpensesState extends State<Expenses> {
       mainContent = ExpensesList(
         expenses: _expenseList,
         onRemoveExpense: _removeExpense,
+      );
+    }
+    if (_error != null) {
+      mainContent = Center(
+        child: Card(
+          shape: BeveledRectangleBorder(
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+            child: Text(
+              _error!,
+              style: TextStyle(color: Colors.red[300]),
+            ),
+          ),
+        ),
       );
     }
     return Scaffold(
