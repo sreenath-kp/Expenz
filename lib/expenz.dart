@@ -26,18 +26,25 @@ class _ExpensesState extends State<Expenses> {
   void _loadItems() async {
     final url = Uri.https(
         'expenz-f4a64-default-rtdb.firebaseio.com', 'expenz-list.json');
-    final response = await http.get(url);
+    try {
+      final response = await http.get(url);
 
-    if (response.statusCode >= 400) {
-      setState(() {
-        _error = "Failed to fetch data.Please try again later";
-      });
-    }
-    final Map<String, dynamic>? listData = json.decode(response.body);
+      if (response.statusCode >= 400) {
+        setState(() {
+          _error = "Failed to fetch data.Please try again later";
+        });
+      }
+      if (response.body == 'null') {
+        setState(() {
+          _isloading = false;
+        });
+        return;
+      }
+      final Map<String, dynamic>? listData = json.decode(response.body);
 
-    final List<Expense> loadedItems = [];
-    if (listData != null) {
-      for (final item in listData.entries) {
+      final List<Expense> loadedItems = [];
+
+      for (final item in listData!.entries) {
         loadedItems.add(
           Expense(
             id: item.key,
@@ -50,10 +57,14 @@ class _ExpensesState extends State<Expenses> {
           ),
         );
       }
+      setState(() {
+        _expenseList = loadedItems;
+      });
+    } catch (e) {
+      setState(() {
+        _error = "Something went wrong! Try again later";
+      });
     }
-    setState(() {
-      _expenseList = loadedItems;
-    });
   }
 
   void _openAddExpenseOverlay() async {
@@ -73,15 +84,27 @@ class _ExpensesState extends State<Expenses> {
     });
   }
 
-  void _removeExpense(Expense expense) {
+  void _removeExpense(Expense expense) async {
     final index = _expenseList.indexOf(expense);
-    final url = Uri.https('expenz-f4a64-default-rtdb.firebaseio.com',
-        'expenz-list/${expense.id}.json');
-    http.delete(url);
     setState(() {
       _expenseList.remove(expense);
+      if (_expenseList.isEmpty) {
+        _isloading = false;
+      }
     });
+    // Delete request
+    final url = Uri.https('expenz-f4a64-default-rtdb.firebaseio.com',
+        'expenz-list/${expense.id}.json');
+    final response = await http.delete(url);
+    if (response.statusCode >= 400) {
+      setState(() {
+        _expenseList.insert(index, expense);
+      });
+    }
+    showSnack(index, expense);
+  }
 
+  void showSnack(index, expense) {
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
