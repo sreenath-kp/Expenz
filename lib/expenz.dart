@@ -25,7 +25,7 @@ class _ExpensesState extends State<Expenses> {
 
   void _loadItems() async {
     final url = Uri.https(
-        'expenz-f4a64-default-rtdb.firebaseio.com', 'expenz-list.json');
+        'expenz-f4a64-default-rtdb.firebaseio.com', '/expenz-list.json');
     try {
       final response = await http.get(url);
 
@@ -62,7 +62,7 @@ class _ExpensesState extends State<Expenses> {
       });
     } catch (e) {
       setState(() {
-        _error = "Something went wrong! Try again later";
+        _error = "Something went wrong! Try again later ($e)";
       });
     }
   }
@@ -104,7 +104,7 @@ class _ExpensesState extends State<Expenses> {
     showSnack(index, expense);
   }
 
-  void showSnack(index, expense) {
+  void showSnack(index, Expense expense) {
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
